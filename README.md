@@ -2,17 +2,26 @@
 
 Env file watcher that watches and decrypts env files on the fly, using Dotenvx for decryption, and stores them in a file-system accessible path for easy loading into a Docker `env_file` directive, so that your Docker containers can be fed live env var file changes.
 
-## Dependencies & Usage
+## Prerequisites
 
 bash, [dotenvx](https://github.com/dotenvx/dotenvx), inotify-tools, jq.
 
-```
+```shell
 # Install dependencies
-sudo apt update && sudo apt install inotify-tools jq curl
+paru inotify-tools jq curl dotenvx
 curl -L -fsS https://raw.githubusercontent.com/dotenvx/dotenvx.sh/main/installer.sh | sh
+git clone https://github.com/YtGz/dotenvx-watcher.git
+cd dotenvx-watcher
+mv env_watcher.fish ~/.config/fish/functions/env_watcher.fish
+mkdir ~/.config/fish/lib && mv env_watcher_helpers.fish ~/.config/fish/lib/env_watcher_helpers.fish
+source ~/.config/fish/config.fish
+```
 
+## Usage
+
+```shell
 # Start the watcher from project root containing your .env files
-./watch.sh --help
+env_watcher
 ```
 
 This env file watcher was primarily created to assist with the integration of Dotenvx into projects that are heavily Docker based.
@@ -20,10 +29,10 @@ This env file watcher was primarily created to assist with the integration of Do
 After trying to integrate Dotenvx with Docker the "traditional" way, I decided that this was a much nicer solution. You can read more about this process in an article I wrote here: [https://dev.to/nullbio/dotenvx-with-docker-the-better-way-to-do-environment-variable-management-5c0n](https://dev.to/nullbio/dotenvx-with-docker-the-better-way-to-do-environment-variable-management-5c0n).
 
 
-## Example usage
+### Example usage
 
-```console
-Usage: ./watch.sh [options] [file...]
+```
+Usage: env_watcher [options] [file...]
 
 Options:
   -h, --help                Show this help message and exit.
@@ -40,16 +49,17 @@ Description:
 
 Examples:
   1. Watch the default environment file:
-     ./watch.sh
+     env_watcher
 
   2. Watch a specific environment file:
-     ./watch.sh .env.dev
+     env_watcher .env.dev
 
   3. Watch multiple environment files:
-     ./watch.sh ~/.env.dev /path/to/.env.prod
+     env_watcher ~/.env.dev /path/to/.env.prod
 
   4. Change the subdirectory where the decrypted files are stored:
-     RAMFS_SUBDIR=projectname && ./watch.sh
+     set -x RAMFS_SUBDIR projectname
+     env_watcher
 ```
 
 ```yaml
@@ -66,8 +76,8 @@ services:
 
 Regular usage example:
 
-```console
-$: ./watch.sh
+```
+$: env_watcher
 Env file watcher started: .env.dev -> /mnt/ramfs/dotenvx/.env.dev.decrypted
 Env file watchers running and waiting for file changes. Ctrl+C to quit...
 Detected modification in .env.dev, decrypting and updating /mnt/ramfs/dotenvx/.env.dev.decrypted ...
@@ -78,6 +88,7 @@ Deleting decrypted env files from memory: /mnt/ramfs/dotenvx
 Specify custom subdirectory:
 
 ```console
-$: RAMFS_SUBDIR=projectname && ./watch.sh
+$: set -x RAMFS_SUBDIR projectname
+$: env_watcher
 Env file watcher started: .env.dev -> /mnt/ramfs/projectname/.env.dev.decrypted
 ```
