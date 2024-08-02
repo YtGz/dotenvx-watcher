@@ -13,7 +13,7 @@ curl -sfS https://dotenvx.sh | sudo sh
 git clone https://github.com/YtGz/dotenvx-watcher.git
 cd dotenvx-watcher
 cp env_watcher.fish ~/.config/fish/functions/env_watcher.fish
-mkdir ~/.config/fiSsh/lib && cp env_watcher_helpers.fish ~/.config/fish/lib/env_watcher_helpers.fish
+mkdir ~/.config/fish/lib && cp env_watcher_helpers.fish ~/.config/fish/lib/env_watcher_helpers.fish
 source ~/.config/fish/config.fish
 ```
 
