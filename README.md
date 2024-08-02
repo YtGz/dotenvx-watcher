@@ -4,16 +4,16 @@ Env file watcher that watches and decrypts env files on the fly, using Dotenvx f
 
 ## Prerequisites
 
-bash, [dotenvx](https://github.com/dotenvx/dotenvx), inotify-tools, jq.
+fish, [dotenvx](https://github.com/dotenvx/dotenvx), inotify-tools, jq.
 
 ```shell
 # Install dependencies
-paru inotify-tools jq curl dotenvx
-curl -L -fsS https://raw.githubusercontent.com/dotenvx/dotenvx.sh/main/installer.sh | sh
+paru inotify-tools jq curl
+curl -sfS https://dotenvx.sh | sudo sh
 git clone https://github.com/YtGz/dotenvx-watcher.git
 cd dotenvx-watcher
-mv env_watcher.fish ~/.config/fish/functions/env_watcher.fish
-mkdir ~/.config/fish/lib && mv env_watcher_helpers.fish ~/.config/fish/lib/env_watcher_helpers.fish
+cp env_watcher.fish ~/.config/fish/functions/env_watcher.fish
+mkdir ~/.config/fiSsh/lib && cp env_watcher_helpers.fish ~/.config/fish/lib/env_watcher_helpers.fish
 source ~/.config/fish/config.fish
 ```
 
@@ -27,7 +27,6 @@ env_watcher
 This env file watcher was primarily created to assist with the integration of Dotenvx into projects that are heavily Docker based.
 
 After trying to integrate Dotenvx with Docker the "traditional" way, I decided that this was a much nicer solution. You can read more about this process in an article I wrote here: [https://dev.to/nullbio/dotenvx-with-docker-the-better-way-to-do-environment-variable-management-5c0n](https://dev.to/nullbio/dotenvx-with-docker-the-better-way-to-do-environment-variable-management-5c0n).
-
 
 ### Example usage
 
@@ -65,13 +64,13 @@ Examples:
 ```yaml
 # compose.yml
 services:
-   postgres:
-      image: postgres:latest
-      env_file:
-         - /mnt/ramfs/dotenvx/.env.dev.decrypted
-      environment:
-         # $POSTGRES_PASSWORD is decrypted inside .env.dev.decrypted
-         POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+  postgres:
+    image: postgres:latest
+    env_file:
+      - /mnt/ramfs/dotenvx/.env.dev.decrypted
+    environment:
+      # $POSTGRES_PASSWORD is decrypted inside .env.dev.decrypted
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
 ```
 
 Regular usage example:
