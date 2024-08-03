@@ -1,6 +1,6 @@
 function _show_help
     echo "
-Usage: (basename $argv[0]) [options] [file...]
+Usage: env_watcher [options] [file...]
 
 Options:
   -h, --help                Show this help message and exit.
@@ -17,16 +17,16 @@ Description:
 
 Examples:
   1. Watch the default environment file:
-     (basename $argv[0])
+     env_watcher
 
   2. Watch a specific environment file:
-     (basename $argv[0]) .env.dev
+     env_watcher .env.dev
 
   3. Watch multiple environment files:
-     (basename $argv[0]) ~/.env.dev /path/to/.env.prod
+     env_watcher ~/.env.dev /path/to/.env.prod
 
   4. Change the subdirectory:
-     RAMFS_SUBDIR=projectname; (basename $argv[0])
+     RAMFS_SUBDIR=projectname; env_watcher
 
 This command allows you to specify custom environment files to monitor. If no arguments are provided,
 it assumes the file '.env.dev'. Multiple files can be watched by providing each as an argument separated
@@ -77,6 +77,10 @@ function _decrypt_and_save
     end
 end
 
+function _run_function_in_background
+  fish -c (string join -- ' ' (string escape -- $argv)) &
+end
+
 function _setup_watcher
     set -l file $argv[1]
     set -l mount_point $argv[2]
@@ -85,22 +89,29 @@ function _setup_watcher
     _decrypt_and_save $file $mount_point true
 
     # Setup watcher to decrypt on modification to env file
-    inotifywait -q -m -e close_write -e delete_self -e move_self $file | while read -l path action
+    _run_function_in_background inotifywait -q -m -e close_write -e delete_self -e move_self $file | while read -l path action
+        set action (string trim "$action")
+        echo "Event detected: path=$path, action=$action"
         if test "$action" = "DELETE_SELF" -o "$action" = "MOVE_SELF"
             echo "Env file deleted or moved. Terminating watcher for $file..."
             break
         end
         _decrypt_and_save $file $mount_point
-    end &
+    end
 
+    # Get the decrypted file path and store the PID
     set -l decrypted_file $mount_point/(basename $file).decrypted
     echo "Env file watcher started: $file -> $decrypted_file"
     echo $last_pid >> /tmp/env_watch_pids.txt
 end
 
 function _env_watcher_
-    set -e # disable exit on error to ensure cleanup doesn't get skipped
-    set -l sub_dir (or (set -q RAMFS_SUBDIR; and echo $RAMFS_SUBDIR) "dotenvx")
+    set -l sub_dir
+    if set -q RAMFS_SUBDIR
+        set sub_dir $RAMFS_SUBDIR
+    else
+        set sub_dir "dotenvx"
+    end
     set -l mount_point /mnt/ramfs/$sub_dir
 
     # Check for another instance running
@@ -140,6 +151,7 @@ function _env_watcher_
     # Set up ramfs mount and exit cleanup
     _mount_ramfs "/mnt/ramfs"
     function on_exit --on-event fish_exit
+        # TODO: does not trap SIGINT yet, cf. https://github.com/fish-shell/fish-shell/issues/6649#issuecomment-1198951287
         _watcher_cleanup /mnt/ramfs/$sub_dir
     end
 
